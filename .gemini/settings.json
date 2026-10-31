@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "blender-studio": {
+      "command": "python3",
+      "args": [
+        "scripts/blender_studio_mcp_bridge.py"
+      ],
+      "env": {
+        "BLENDER_GCP_PROJECT": "yuksektek",
+        "BLENDER_INSTANCE_NAME": "blender-studio",
+        "BLENDER_BUCKET_NAME": "yuksektek-blender-films",
+        "BLENDER_HOST": "35.246.180.235",
+        "BLENDER_PORT": "9876"
+      }
+    }
+  }
+}

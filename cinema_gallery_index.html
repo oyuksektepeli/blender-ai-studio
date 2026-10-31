@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🍿 Nil'in 3D Animasyon & Film Stüdyosu — Sinema Salonu</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card: #151c2f;
+      --accent: #38bdf8;
+      --accent2: #c084fc;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #1e1b4b 0%, var(--bg) 60%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    header {
+      max-width: 1200px;
+      margin: 0 auto 2.5rem auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(21, 28, 47, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 18px;
+      padding: 1.5rem 2rem;
+      backdrop-filter: blur(12px);
+    }
+    h1 {
+      font-size: 1.8rem;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle { color: var(--muted); margin-top: 0.35rem; font-size: 0.95rem; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.2rem;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      background: linear-gradient(135deg, #0284c7, #7c3aed);
+      color: white;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+    .btn:hover { transform: translateY(-2px); opacity: 0.95; }
+    .section-title {
+      max-width: 1200px;
+      margin: 2rem auto 1rem auto;
+      font-size: 1.35rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .card video, .card img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      background: #000;
+    }
+    .card-body {
+      padding: 1.1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .card-title { font-weight: 700; font-size: 1.05rem; word-break: break-all; }
+    .card-meta { color: var(--muted); font-size: 0.82rem; }
+    .card-actions { display: flex; gap: 0.6rem; margin-top: 0.25rem; }
+    .empty {
+      max-width: 1200px;
+      margin: 1rem auto;
+      padding: 2rem;
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>🍿 3D Animasyon & Film Stüdyosu — Sinema Salonu</h1>
+      <p class="subtitle">Antigravity & Blender ile çektiğin tüm filmler ve sahne fotoğrafları otomatik olarak burada yayınlanır.</p>
+    </div>
+    <div style="display:flex; gap:0.75rem;">
+      <a class="btn" id="liveDesktopBtn" href="http://35.246.180.235:6080/vnc.html?autoconnect=true&resize=scale" target="_blank">🖥️ Canlı Blender Ekranı</a>
+      <a class="btn" href="javascript:location.reload()">🔄 Yenile</a>
+    </div>
+  </header>
+
+  <h2 class="section-title">🎬 Çekilen Filmler (.mp4)</h2>
+  <div id="filmsGrid" class="grid"></div>
+
+  <h2 class="section-title">📸 Sahne Önizleme Fotoğrafları (.png)</h2>
+  <div id="previewsGrid" class="grid"></div>
+
+  <script>
+    const BUCKET = "yuksektek-blender-films";
+    async function loadGallery() {
+      const res = await fetch(`https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`);
+      const data = await res.json();
+      const items = (data.items || []).sort((a, b) => new Date(b.updated) - new Date(a.updated));
+
+      const films = items.filter(i => i.name.endsWith(".mp4"));
+      const previews = items.filter(i => i.name.endsWith(".png") || i.name.endsWith(".jpg"));
+
+      const filmsGrid = document.getElementById("filmsGrid");
+      const previewsGrid = document.getElementById("previewsGrid");
+
+      if (films.length === 0) {
+        filmsGrid.outerHTML = '<div class="empty">Henüz ilk filmin yüklenmedi. Antigravity\'ye "Filmi çek!" dediğinde burada belirecek!</div>';
+      } else {
+        filmsGrid.innerHTML = films.map(item => {
+          const url = `https://storage.googleapis.com/${BUCKET}/${encodeURI(item.name)}`;
+          const cleanName = item.name.split("/").pop();
+          const dateStr = new Date(item.updated).toLocaleString("tr-TR");
+          const sizeMb = (Number(item.size) / (1024 * 1024)).toFixed(2);
+          return `
+            <div class="card">
+              <video src="${url}" controls preload="metadata" loop></video>
+              <div class="card-body">
+                <div class="card-title">🎬 ${cleanName}</div>
+                <div class="card-meta">📅 ${dateStr} • 📦 ${sizeMb} MB</div>
+                <div class="card-actions">
+                  <a class="btn" href="${url}" download="${cleanName}" target="_blank">⬇️ İndir / Tam Ekran Aç</a>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      if (previews.length === 0) {
+        previewsGrid.outerHTML = '<div class="empty">Henüz sahne önizleme fotoğrafı yok.</div>';
+      } else {
+        previewsGrid.innerHTML = previews.map(item => {
+          const url = `https://storage.googleapis.com/${BUCKET}/${encodeURI(item.name)}`;
+          const cleanName = item.name.split("/").pop();
+          const dateStr = new Date(item.updated).toLocaleString("tr-TR");
+          return `
+            <div class="card">
+              <a href="${url}" target="_blank"><img src="${url}" alt="${cleanName}" loading="lazy" /></a>
+              <div class="card-body">
+                <div class="card-title">📸 ${cleanName}</div>
+                <div class="card-meta">📅 ${dateStr}</div>
+                <div class="card-actions">
+                  <a class="btn" href="${url}" download="${cleanName}" target="_blank">🔍 Tam Boyut / İndir</a>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+    loadGallery();
+  </script>
+</body>
+</html>
