@@ -35,3 +35,8 @@ Gerçek yönetmenler bile bir filmi tek saniyede çekmez. En güzel sonuçları 
 Beğendiğin her film fikrini ve sahneyi Antigravity'ye kaydettirebilirsin:
 * *"Bu sahne fikrimizi ve kullandığımız ışık ayarlarını `storyboards/` klasörüne kaydet ki yarın devam edebilelim!"*
 * *"Şu anki Blender sahnemizi sunucuda `kristal_sato.blend` adıyla kaydet."*
+
+---
+
+## 🎯 Sıradaki Adım
+Artık Antigravity ile nasıl konuşacağını biliyorsun! Şimdi son rehberimiz olan **[04. Stüdyo, Canlı Ekran ve Sinema Salonu Nasıl Çalışır?](04-studyo-ve-sinema-salonu-nasil-calisir.md)** sayfasına geçerek canlı ekranı ve filmlerini nasıl izleyip indireceğini keşfet!

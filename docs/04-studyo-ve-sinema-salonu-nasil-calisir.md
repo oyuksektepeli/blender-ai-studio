@@ -30,3 +30,8 @@ Antigravity her fotoğraf (`.png`) veya film (`.mp4`) çektiğinde bunu otomatik
 * 🍿 **Sinema Salonu (Sadece Senin Google Hesabına Özel):**  
   👉 **[Stüdyo Sinema Salonunu Aç (Google ile Giriş Yap)](https://blender-sinema-salonu-74454451681.europe-west3.run.app)**
 * **Tek Tıkla İndir:** Linke tıkladığında filmin doğrudan tarayıcıda oynar; sağ alttaki **İndir** düğmesine basarak bilgisayarında veya telefonunda saklayabilir, arkadaşlarına gönderebilirsin!
+
+---
+
+## 🌟 Tebrikler! Artık İlk Filmini Çekmeye Hazırsın!
+* İlham almak için **[Örnek Film Senaryosu: Kristal Bulut Sarayı](../storyboards/00-ornek-film-senaryosu.md)** sayfasına göz atabilir veya **[Ana Sayfaya (README)](../README.md)** dönüp Antigravity'ye ilk yönetmen komutunu verebilirsin!
