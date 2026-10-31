@@ -145,6 +145,10 @@ def handle_render_preview_snapshot(params):
     scn.cycles.device = "GPU"
     scn.cycles.samples = samples
     scn.cycles.use_denoising = True
+    try:
+        scn.cycles.denoiser = "OPTIX"
+    except Exception:
+        pass
     scn.render.resolution_x = 1280
     scn.render.resolution_y = 720
     scn.render.resolution_percentage = 100
@@ -183,9 +187,14 @@ def handle_render_animation_mp4(params):
     scn.render.engine = "CYCLES"
     scn.cycles.device = "GPU"
     scn.cycles.samples = samples
+    scn.cycles.max_bounces = 4
     scn.cycles.use_adaptive_sampling = True
     scn.cycles.adaptive_threshold = 0.05
     scn.cycles.use_denoising = True
+    try:
+        scn.cycles.denoiser = "OPTIX"
+    except Exception:
+        scn.cycles.use_denoising = False
 
     scn.render.image_settings.file_format = "FFMPEG"
     scn.render.ffmpeg.format = "MPEG4"
@@ -290,7 +299,7 @@ def client_handler(conn: socket.socket):
         params = req.get("params", {})
         res_q = queue.Queue()
         cmd_queue.put((cmd_type, params, res_q))
-        result = res_q.get(timeout=600)
+        result = res_q.get(timeout=1800)
         conn.sendall(json.dumps(result, ensure_ascii=False).encode("utf-8"))
     except Exception as e:
         err = {"status": "error", "message": str(e)}

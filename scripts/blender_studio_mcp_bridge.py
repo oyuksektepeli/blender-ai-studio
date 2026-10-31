@@ -227,7 +227,7 @@ def handle_tool_call(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
         except Exception as e:
             return {"error": str(e)}
     else:
-        return send_blender_command(name, args, timeout=600.0)
+        return send_blender_command(name, args, timeout=1800.0)
 
 
 def main():
