@@ -115,6 +115,11 @@ def handle_execute_code(params):
     ns = {"bpy": bpy, "__builtins__": __builtins__}
     with redirect_stdout(buf):
         exec(code, ns)
+    try:
+        os.makedirs("/home/studio/projects", exist_ok=True)
+        bpy.ops.wm.save_as_mainfile(filepath="/home/studio/projects/latest_autosave.blend")
+    except Exception:
+        pass
     # Redraw viewport if GUI is active
     try:
         for window in bpy.context.window_manager.windows:
@@ -162,9 +167,8 @@ def handle_render_animation_mp4(params):
     film_name = params.get("film_name", f"film_{int(time.time())}")
     film_name = "".join(c if c.isalnum() or c in ("_", "-") else "_" for c in film_name)
     frame_start = int(params.get("frame_start", 1))
-    frame_end = int(params.get("frame_end", 96))
-    engine = params.get("engine", "CYCLES")
-    samples = int(params.get("samples", 32))
+    frame_end = int(params.get("frame_end", 48))
+    samples = int(params.get("samples", 16))
 
     enable_gpu_rendering()
     scn = bpy.context.scene
@@ -175,12 +179,13 @@ def handle_render_animation_mp4(params):
     scn.render.resolution_y = 720
     scn.render.resolution_percentage = 100
 
-    if engine in ("CYCLES", "BLENDER_EEVEE_NEXT", "BLENDER_EEVEE"):
-        scn.render.engine = engine
-    if scn.render.engine == "CYCLES":
-        scn.cycles.device = "GPU"
-        scn.cycles.samples = samples
-        scn.cycles.use_denoising = True
+    # Her zaman NVIDIA OptiX/CUDA donanım hızlandırmalı CYCLES kullan
+    scn.render.engine = "CYCLES"
+    scn.cycles.device = "GPU"
+    scn.cycles.samples = samples
+    scn.cycles.use_adaptive_sampling = True
+    scn.cycles.adaptive_threshold = 0.05
+    scn.cycles.use_denoising = True
 
     scn.render.image_settings.file_format = "FFMPEG"
     scn.render.ffmpeg.format = "MPEG4"
@@ -192,7 +197,6 @@ def handle_render_animation_mp4(params):
     scn.render.filepath = local_mp4
     bpy.ops.render.render(animation=True)
 
-    # Also save a thumbnail frame from frame_start
     url = upload_to_gcs(local_mp4, f"films/{film_name}.mp4", "video/mp4")
     return {
         "status": "success",

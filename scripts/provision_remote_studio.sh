@@ -5,7 +5,7 @@ echo "=== [1/6] Sistem paketleri, XFCE4 Masaüstü, NoVNC ve XRDP kuruluyor ==="
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update -y
 sudo apt-get install -y \
-  xfce4 xfce4-goodies dbus-x11 x11-xserver-utils \
+  xfce4 xfce4-goodies dbus-x11 x11-xserver-utils xvfb \
   x11vnc novnc python3-websockify xrdp \
   ffmpeg mesa-utils libxi6 libxrender1 libxkbcommon0 libxkbcommon-x11-0 \
   libsm6 libice6 libgl1 libegl1 libxxf86vm1 libxfixes3 \
@@ -39,14 +39,14 @@ sudo chown -R studio:studio /opt/studio /home/studio/projects
 echo "=== [5/6] Systemd servisleri (Xorg, XFCE4, Web Desktop :6080, Blender MCP :9876) kuruluyor ==="
 cat << 'EOF' | sudo tee /etc/systemd/system/studio-xorg.service >/dev/null
 [Unit]
-Description=Studio Headless NVIDIA Xorg Server (:0)
-After=network.target systemd-user-sessions.service
+Description=Studio Virtual X11 Server (:0)
+After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/Xorg :0 -noreset +extension GLX +extension RANDR +extension RENDER -config /etc/X11/xorg.conf
+ExecStart=/usr/bin/Xvfb :0 -screen 0 1920x1080x24 +extension GLX +extension RANDR +render -noreset
 Restart=always
-RestartSec=3
+RestartSec=2
 
 [Install]
 WantedBy=multi-user.target
