@@ -33,5 +33,6 @@ Antigravity her fotoğraf (`.png`) veya film (`.mp4`) çektiğinde bunu otomatik
 
 ---
 
-## 🌟 Tebrikler! Artık İlk Filmini Çekmeye Hazırsın!
+## 🌟 Sıradaki Adım: Filmlerine Türkçe Seslendirme, Dublaj ve Müzik Ekle!
+* 👉 **[05. Yapay Zeka ile Türkçe Dublaj, Ses Değiştirme, Film Müziği ve Doku Üretimi](05-yapay-zeka-dublaj-ses-ve-muzik-rehberi.md)**
 * İlham almak için **[Örnek Film Senaryosu: Kristal Bulut Sarayı](../storyboards/00-ornek-film-senaryosu.md)** sayfasına göz atabilir veya **[Ana Sayfaya (README)](../README.md)** dönüp Antigravity'ye ilk yönetmen komutunu verebilirsin!

@@ -16,7 +16,7 @@ Burası senin **Antigravity Yapay Zeka Yönetmen Ortağınla** birlikte hiçbir 
 
 ## 📚 Yönetmen El Kitapları (Okuma Sırasıyla)
 
-İlk filmini çekmeden önce senin için hazırlanan bu 4 kısa ve eğlenceli rehbere göz at:
+İlk filmini çekmeden önce senin için hazırlanan bu 5 kısa ve eğlenceli rehbere göz at:
 
 1. 🌟 **[01. Pixar ve Disney Yönetmenlerinin Hikaye & Sahne Sırları](docs/01-pixar-hikaye-ve-yonetmenlik-sirri.md)**  
    *(Renk paletleri, sahne kalbi ve 3 adımda sahne kurma sanatı)*
@@ -26,6 +26,8 @@ Burası senin **Antigravity Yapay Zeka Yönetmen Ortağınla** birlikte hiçbir 
    *(Antigravity'ye verebileceğin hazır yönetmen komutları ve altın kurallar)*
 4. 🍿 **[04. Stüdyo, Canlı Ekran ve Sinema Salonu Nasıl Çalışır?](docs/04-studyo-ve-sinema-salonu-nasil-calisir.md)**  
    *(Buluttaki GPU süper bilgisayarımız, 120 dk otomatik uyku kalkanı ve tek tıkla film indirme)*
+5. 🎙️ **[05. Yapay Zeka ile Türkçe Dublaj, Ses Değiştirme, Film Müziği ve Doku Üretimi](docs/05-yapay-zeka-dublaj-ses-ve-muzik-rehberi.md)**  
+   *(Karakter seslendirme, ses değiştirme efektleri, dudak senkronu ve Ghibli/Pixar tarzı orkestral film müzikleri)*
 
 ---
 

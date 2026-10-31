@@ -51,6 +51,35 @@ Yönetmen *"Blender ekranını canlı görmek istiyorum"* veya *"Kendim fareyle 
 
 ---
 
-## 🗂️ 5. Senaryo ve Sahne Kasası (`scenes/` ve `storyboards/` Klasörleri)
+## 🗂️ 5. Yapay Zeka ile Türkçe Dublaj, Ses Değiştirme, Film Müziği ve Doku Üretimi (`yuksektek`)
+
+Yönetmen filmlerine **Türkçe seslendirme (dublaj)**, **farklı karakter sesleri**, **ses değiştirme (peri/sincap, dev, robot, eko)**, **dudak senkronu (lip-sync)**, **orkestral film müziği** veya **AI gökyüzü/doku** eklemek istediğinde **yalnızca `yuksektek` GCP projesini** ve aşağıdaki hazır MCP araçlarını / betiğini (`./scripts/ai_dubbing_and_music.py`) kullan:
+
+### A. Aktif AI Modelleri (`yuksektek` Projesinde Yetkilendirilmiş)
+1. **Karakter Seslendirme & Duygulu Türkçe Dublaj:**
+   * Birincil Model: `gemini-3.1-flash-tts-preview` (`us-central1` Vertex AI — duygu, ton, fısıltı, kahkaha ve karakter oyunculuğu destekli)
+   * Yedek Model: Google Cloud TTS `Chirp3-HD` (`tr-TR-Chirp3-HD-Aoede`, `Puck`, `Charon`, `Fenrir`, `Leda`, `Kore`)
+   * **Hazır Karakter Ses Profilleri:**
+     * `PIRIL_GENC_KIZ` (`Aoede`): Neşeli, enerjik genç kız / başrol kahraman
+     * `TIKIR_KOMIK_YARDIMCI` (`Puck`): Hızlı, şakacı, heyecanlı yardımcı karakter / sevimli hayvan veya robot
+     * `BILGE_USTA` (`Charon`): Sıcak, bilge masal anlatıcısı / usta / büyücü
+     * `KAHRAMAN_KAPTAN` (`Fenrir`): Gür, cesur kaptan / şövalye
+     * `MASAL_PERISI` (`Leda`): Zarif, büyülü peri / prenses
+     * `BILIM_REHBERI` (`Kore`): Berrak, dost canlısı anlatıcı
+2. **Ses Değiştirme (Voice Changer Efektleri):**
+   * `voice_effect` parametresi: `normal`, `hizli_cizgi_film`, `peri_sincap` (tiz/sevimli sincap-peri sesi), `dev_kaptan` (kalın dev/ejderha sesi), `komik_robot` (mekanik robot sesi), `buyulu_magara` (kristal saray yankısı).
+3. **Orkestral Film Müziği Üretimi:**
+   * Model: `lyria-3-pro-preview` (`global` Vertex AI) — Studio Ghibli ve Pixar tarzında tam uzunlukta enstrümantal film müziği üretir.
+4. **3B Gökyüzü (Skybox) ve Yüzey Dokusu (UV Texture) Üretimi:**
+   * Modeller: `gemini-3-pro-image` ve `gemini-3.1-flash-image` (`global` Vertex AI).
+5. **MCP Araçları ve Otomatik Dublaj Hattı:**
+   * `dub_and_publish_film`: Mevcut bir `.mp4` filme çok karakterli Türkçe diyalogları ve Lyria 3 Pro arka plan müziğini (konuşma sırasında müziği otomatik kısarak / *auto-ducking*) birleştirir, 24 FPS dudak senkronu (`mouth_envelope`) verisini çıkarır ve sesli filmi doğrudan Özel Sinema Salonuna (`gs://yuksektek-blender-films/films/<film>_dublajli.mp4`) yükler.
+   * `generate_character_voiceover`: Tekil karakter ses dosyası (`.wav`) ve 24 FPS `mouth_envelope` dizisi üretir (Blender'da 3D karakterin çenesini/ağzını `mouth_envelope` değerlerine göre kare kare açıp kapatmak için kullan!).
+   * `generate_film_soundtrack`: Lyria 3 Pro ile `.wav` film müziği üretir.
+   * `generate_ai_skybox_or_texture`: Blender sahnesine giydirmek için `.png` gökyüzü veya doku üretir.
+
+---
+
+## 🗂️ 6. Senaryo ve Sahne Kasası (`scenes/` ve `storyboards/` Klasörleri)
 * Yönetmenin anlattığı film fikirlerini, karakter hikayelerini ve sahne tasarımlarını düzenli olarak `storyboards/` klasörüne şık Türkçe özetler halinde kaydet.
 * Oluşturulan her 3D sahnenin `.blend` projesini sunucuda `/home/studio/projects/` altında ve bulut yedeklerinde koru ki yönetmen istediği zaman *"Geçen yaptığımız şato sahnesine geri dönelim"* diyebilsin!

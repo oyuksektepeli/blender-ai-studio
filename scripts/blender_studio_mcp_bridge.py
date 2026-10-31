@@ -12,7 +12,10 @@ import socket
 import subprocess
 import sys
 import time
+from pathlib import Path
 from typing import Any, Dict
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 PROJECT_ID = os.environ.get("BLENDER_GCP_PROJECT", "yuksektek")
 INSTANCE_NAME = os.environ.get("BLENDER_INSTANCE_NAME", "blender-studio")
@@ -200,6 +203,80 @@ TOOLS = [
         "name": "list_studio_films",
         "description": "Google Cloud Storage (yuksektek-blender-films) üzerindeki tüm çekilmiş filmleri ve fotoğrafları doğrudan indirme linkleriyle listeler.",
         "inputSchema": {"type": "object", "properties": {}}
+    },
+    {
+        "name": "generate_character_voiceover",
+        "description": "yuksektek projesindeki Gemini 3.1 Flash TTS (Aoede, Puck, Charon, Fenrir, Leda, Kore) veya Chirp3-HD ile Türkçe çizgi film karakter seslendirmesi üretir, ses değiştirme efekti (normal, peri_sincap, dev_kaptan, komik_robot, buyulu_magara) uygular ve 24 FPS dudak senkronu (mouth_envelope) verisini döndürür.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "text": {"type": "string", "description": "Karakterin Türkçe söyleyeceği replik"},
+                "character_profile": {
+                    "type": "string",
+                    "description": "Karakter ses kimliği: PIRIL_GENC_KIZ (Aoede), TIKIR_KOMIK_YARDIMCI (Puck), BILGE_USTA (Charon), KAHRAMAN_KAPTAN (Fenrir), MASAL_PERISI (Leda), BILIM_REHBERI (Kore)",
+                    "default": "PIRIL_GENC_KIZ"
+                },
+                "emotion_prompt": {"type": "string", "description": "Duygu ve oyunculuk yönergesi (örn: Heyecanlı ve neşeli bir çizgi film karakteri gibi Türkçe söyle)"},
+                "voice_effect": {
+                    "type": "string",
+                    "description": "Ses değiştirme efekti: normal, hizli_cizgi_film, peri_sincap, dev_kaptan, komik_robot, buyulu_magara",
+                    "default": "normal"
+                },
+                "output_wav_path": {"type": "string", "description": "Kaydedilecek WAV dosya yolu (opsiyonel)"}
+            },
+            "required": ["text"]
+        }
+    },
+    {
+        "name": "generate_film_soundtrack",
+        "description": "yuksektek projesindeki Lyria 3 Pro (lyria-3-pro-preview) modeli ile Studio Ghibli / Pixar tarzında orkestral çizgi film ve animasyon müziği üretir.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "prompt": {"type": "string", "description": "Müzik tarzı ve enstrüman açıklaması (İngilizce veya Türkçe)"},
+                "output_wav_path": {"type": "string", "description": "Kaydedilecek WAV dosya yolu (opsiyonel)"}
+            },
+            "required": ["prompt"]
+        }
+    },
+    {
+        "name": "generate_ai_skybox_or_texture",
+        "description": "yuksektek projesindeki Gemini 3 Pro Image (gemini-3-pro-image) veya Gemini 3.1 Flash Image modeli ile Blender 3D sahneleri için boyalı gökyüzü kubbesi (skybox) veya 3D obje kaplama dokusu (UV texture) üretir.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "prompt": {"type": "string", "description": "Üretilecek gökyüzü veya yüzey dokusunun açıklaması"},
+                "output_png_path": {"type": "string", "description": "Kaydedilecek PNG dosya yolu"},
+                "aspect_ratio": {"type": "string", "description": "En-boy oranı (16:9, 1:1)", "default": "16:9"}
+            },
+            "required": ["prompt", "output_png_path"]
+        }
+    },
+    {
+        "name": "dub_and_publish_film",
+        "description": "Çekilmiş bir .mp4 filme birden fazla karakterin Türkçe dublajını, ses değiştirme efektlerini ve Lyria 3 Pro arka plan müziğini (konuşma anında müziği otomatik kısarak / auto-ducking) birleştirir ve Özel Sinema Salonuna (yuksektek-blender-films) yükleyip direkt izleme/indirme linkini döndürür.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "film_name": {"type": "string", "description": "Dublaj eklenecek filmin adı (örn: kristal_saray_tanitim_filmi)"},
+                "dialogue_lines": {
+                    "type": "array",
+                    "description": "Sırasıyla konuşacak karakter replikleri listesi",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "text": {"type": "string"},
+                            "character_profile": {"type": "string", "default": "PIRIL_GENC_KIZ"},
+                            "emotion_prompt": {"type": "string"},
+                            "voice_effect": {"type": "string", "default": "normal"}
+                        },
+                        "required": ["text"]
+                    }
+                },
+                "music_prompt": {"type": "string", "description": "Arka plan için Lyria 3 Pro film müziği açıklaması (opsiyonel)"}
+            },
+            "required": ["film_name", "dialogue_lines"]
+        }
     }
 ]
 
@@ -227,6 +304,38 @@ def handle_tool_call(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
             }
         except Exception as e:
             return {"error": str(e)}
+    elif name in (
+        "generate_character_voiceover",
+        "generate_film_soundtrack",
+        "generate_ai_skybox_or_texture",
+        "dub_and_publish_film",
+    ):
+        import ai_dubbing_and_music as adm
+        if name == "generate_character_voiceover":
+            return adm.synthesize_character_speech(
+                text=args["text"],
+                character_profile=args.get("character_profile", "PIRIL_GENC_KIZ"),
+                emotion_prompt=args.get("emotion_prompt"),
+                voice_effect=args.get("voice_effect", "normal"),
+                output_wav_path=args.get("output_wav_path"),
+            )
+        elif name == "generate_film_soundtrack":
+            return adm.generate_lyria_music(
+                prompt=args["prompt"],
+                output_wav_path=args.get("output_wav_path"),
+            )
+        elif name == "generate_ai_skybox_or_texture":
+            return adm.generate_ai_texture(
+                prompt=args["prompt"],
+                output_png_path=args["output_png_path"],
+                aspect_ratio=args.get("aspect_ratio", "16:9"),
+            )
+        elif name == "dub_and_publish_film":
+            return adm.dub_film_with_dialogue_and_music(
+                film_name=args["film_name"],
+                dialogue_lines=args["dialogue_lines"],
+                music_prompt=args.get("music_prompt"),
+            )
     else:
         return send_blender_command(name, args, timeout=1800.0)
 
