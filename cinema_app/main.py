@@ -41,6 +41,38 @@ def get_logged_in_user():
     return None
 
 
+def format_size_tr(size_bytes):
+    n = float(size_bytes or 0)
+    if n < 1024 * 1024:
+        return f"{n / 1024:.1f} KB"
+    return f"{n / (1024 * 1024):.2f} MB"
+
+
+def list_gallery_items():
+    bucket = storage_client.bucket(BUCKET_NAME)
+    blobs = list(bucket.list_blobs())
+    blobs.sort(key=lambda b: b.updated.timestamp() if b.updated else 0, reverse=True)
+
+    films = []
+    previews = []
+    for b in blobs:
+        clean_name = b.name.split("/")[-1]
+        updated_str = b.updated.strftime("%d.%m.%Y %H:%M") if b.updated else ""
+        entry = {
+            "name": b.name,
+            "clean_name": clean_name,
+            "size": b.size or 0,
+            "size_human": format_size_tr(b.size),
+            "updated": b.updated.isoformat() if b.updated else "",
+            "updated_human": updated_str,
+        }
+        if b.name.endswith(".mp4"):
+            films.append(entry)
+        elif b.name.endswith(".png") or b.name.endswith(".jpg"):
+            previews.append(entry)
+    return films, previews
+
+
 LOGIN_HTML = """<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -218,7 +250,7 @@ GALLERY_HTML = """<!DOCTYPE html>
       justify-content: center;
       flex-wrap: wrap;
     }
-    button.btn {
+    a.btn, button.btn {
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       color: white;
       border: none;
@@ -227,6 +259,8 @@ GALLERY_HTML = """<!DOCTYPE html>
       font-weight: 600;
       cursor: pointer;
       font-size: 0.95rem;
+      text-decoration: none;
+      display: inline-block;
     }
     main { max-width: 1200px; margin: 0 auto; }
     h2.section-title {
@@ -298,90 +332,55 @@ GALLERY_HTML = """<!DOCTYPE html>
     <h1>🎬 Özel Animasyon & Film Sinema Salonu</h1>
     <p class="subtitle">Blender 5.2 AI Stüdyosu'nda çektiğin tüm filmler ve sahne fotoğrafları yalnızca senin hesabına özel olarak burada yayınlanır.</p>
     <div class="controls">
-      <button class="btn" onclick="loadGallery()">🔄 Yeni Çekimleri Yenile</button>
+      <a class="btn" href="/">🔄 Yeni Çekimleri Yenile</a>
     </div>
   </header>
 
   <main>
     <h2 class="section-title">🍿 Çekilen Kısa Filmler (.mp4)</h2>
-    <div id="films-grid" class="grid"><div class="empty">Filmler yükleniyor...</div></div>
+    <div id="films-grid" class="grid">
+      {% if films %}
+        {% for item in films %}
+          <div class="card">
+            <video controls preload="metadata" src="/media/{{ item.name }}"></video>
+            <div class="card-body">
+              <div class="card-title">🎞️ {{ item.clean_name }}</div>
+              <div class="card-meta">📅 {{ item.updated_human }} • 📦 {{ item.size_human }}</div>
+              <div class="card-actions">
+                <a class="primary" href="/media/{{ item.name }}?download=1">⬇️ Filmi İndir</a>
+                <a href="/media/{{ item.name }}" target="_blank">🔍 Tam Ekran</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty">Henüz bir .mp4 film çekilmedi.</div>
+      {% endif %}
+    </div>
 
     <h2 class="section-title">📸 Sahne Önizleme Fotoğrafları (.png)</h2>
-    <div id="previews-grid" class="grid"><div class="empty">Fotoğraflar yükleniyor...</div></div>
+    <div id="previews-grid" class="grid">
+      {% if previews %}
+        {% for item in previews %}
+          <div class="card">
+            <a href="/media/{{ item.name }}" target="_blank">
+              <img loading="lazy" src="/media/{{ item.name }}" alt="{{ item.clean_name }}" />
+            </a>
+            <div class="card-body">
+              <div class="card-title">🖼️ {{ item.clean_name }}</div>
+              <div class="card-meta">📅 {{ item.updated_human }} • 📦 {{ item.size_human }}</div>
+              <div class="card-actions">
+                <a class="primary" href="/media/{{ item.name }}?download=1">⬇️ Fotoğrafı İndir</a>
+                <a href="/media/{{ item.name }}" target="_blank">🔍 Büyüt</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty">Henüz bir sahne fotoğrafı çekilmedi.</div>
+      {% endif %}
+    </div>
   </main>
-
-  <script>
-    function formatSize(bytes) {
-      const n = Number(bytes || 0);
-      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
-      return (n / (1024 * 1024)).toFixed(2) + ' MB';
-    }
-    function formatDate(iso) {
-      if (!iso) return '';
-      return new Date(iso).toLocaleString('tr-TR');
-    }
-    async function loadGallery() {
-      const filmsGrid = document.getElementById('films-grid');
-      const previewsGrid = document.getElementById('previews-grid');
-      try {
-        const res = await fetch('/api/items');
-        if (res.status === 401) {
-          window.location.href = '/login';
-          return;
-        }
-        const data = await res.json();
-        const films = data.films || [];
-        const previews = data.previews || [];
-
-        if (films.length === 0) {
-          filmsGrid.innerHTML = '<div class="empty">Henüz bir .mp4 film çekilmedi. Antigravity\'ye "Kamerayı döndür ve 5 saniyelik film çek!" diyebilirsin.</div>';
-        } else {
-          filmsGrid.innerHTML = films.map(item => {
-            const cleanName = item.name.replace('films/', '');
-            return `
-              <div class="card">
-                <video controls preload="metadata" src="/media/${encodeURIComponent(item.name)}"></video>
-                <div class="card-body">
-                  <div class="card-title">🎞️ ${cleanName}</div>
-                  <div class="card-meta">📅 ${formatDate(item.updated)} • 📦 ${formatSize(item.size)}</div>
-                  <div class="card-actions">
-                    <a class="primary" href="/media/${encodeURIComponent(item.name)}?download=1">⬇️ Filmi İndir</a>
-                    <a href="/media/${encodeURIComponent(item.name)}" target="_blank">🔍 Tam Ekran</a>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('');
-        }
-
-        if (previews.length === 0) {
-          previewsGrid.innerHTML = '<div class="empty">Henüz bir sahne fotoğrafı çekilmedi. Antigravity\'ye "Sahnemin fotoğrafını çek!" diyebilirsin.</div>';
-        } else {
-          previewsGrid.innerHTML = previews.map(item => {
-            const cleanName = item.name.replace('previews/', '');
-            return `
-              <div class="card">
-                <a href="/media/${encodeURIComponent(item.name)}" target="_blank">
-                  <img loading="lazy" src="/media/${encodeURIComponent(item.name)}" alt="${cleanName}" />
-                </a>
-                <div class="card-body">
-                  <div class="card-title">🖼️ ${cleanName}</div>
-                  <div class="card-meta">📅 ${formatDate(item.updated)} • 📦 ${formatSize(item.size)}</div>
-                  <div class="card-actions">
-                    <a class="primary" href="/media/${encodeURIComponent(item.name)}?download=1">⬇️ Fotoğrafı İndir</a>
-                    <a href="/media/${encodeURIComponent(item.name)}" target="_blank">🔍 Büyüt</a>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('');
-        }
-      } catch (err) {
-        filmsGrid.innerHTML = `<div class="empty">Galeri yüklenirken hata oluştu: ${err.message}</div>`;
-      }
-    }
-    loadGallery();
-  </script>
 </body>
 </html>
 """
@@ -405,7 +404,6 @@ def login():
             next_url=next_url,
         )
 
-    # Verify against Google Cloud Identity Platform (Firebase Auth REST API)
     url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={IDENTITY_API_KEY}"
     payload = json.dumps(
         {"email": email, "password": password, "returnSecureToken": True}
@@ -442,7 +440,10 @@ def index():
     user_email = get_logged_in_user()
     if not user_email:
         return redirect(url_for("login", next="/"))
-    return render_template_string(GALLERY_HTML, user_email=user_email)
+    films, previews = list_gallery_items()
+    return render_template_string(
+        GALLERY_HTML, user_email=user_email, films=films, previews=previews
+    )
 
 
 @app.route("/api/items")
@@ -450,23 +451,7 @@ def api_items():
     user_email = get_logged_in_user()
     if not user_email:
         abort(401)
-    bucket = storage_client.bucket(BUCKET_NAME)
-    blobs = list(bucket.list_blobs())
-    blobs.sort(key=lambda b: b.updated or 0, reverse=True)
-
-    films = []
-    previews = []
-    for b in blobs:
-        entry = {
-            "name": b.name,
-            "size": b.size,
-            "updated": b.updated.isoformat() if b.updated else "",
-        }
-        if b.name.endswith(".mp4"):
-            films.append(entry)
-        elif b.name.endswith(".png") or b.name.endswith(".jpg"):
-            previews.append(entry)
-
+    films, previews = list_gallery_items()
     return jsonify({"films": films, "previews": previews})
 
 
@@ -491,3 +476,7 @@ def serve_media(blob_path: str):
     else:
         headers["Content-Disposition"] = f'inline; filename="{filename}"'
     return Response(data, mimetype=content_type, headers=headers)
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
