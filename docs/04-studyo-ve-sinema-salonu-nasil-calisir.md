@@ -7,7 +7,7 @@ Bu rehberde buluttaki **Blender AI Film Stüdyomuzun** nasıl çalıştığını
 ## ⚡ 1. Buluttaki Süper Bilgisayarın (`blender-studio`)
 Senin kendi bilgisayarını hiç yormamak ve fanlarını bile çalıştırmamak için Google Cloud üzerinde dev bir stüdyo bilgisayarımız var:
 * **Ekran Kartı (GPU):** NVIDIA L4 (24 GB VRAM) / RTX Ray-Tracing Hızlandırmalı
-* **Program:** Blender 4.3 LTS (Stüdyo Sürümü)
+* **Program:** Blender 5.2.3 LTS (Stüdyo Sürümü)
 
 ### 💤 Otomatik Uyku Kalkanı (120 Dakika)
 * Stüdyo bilgisayarımız **120 dakika (2 saat)** boyunca hiç kullanılmazsa doğayı ve bütçemizi korumak için kendi kendine **Uyku Moduna** geçer.
@@ -24,9 +24,9 @@ Antigravity sahneyi kurarken nesnelerin Blender ekranında kendi kendine nasıl 
 
 ---
 
-## 🎬 3. Çekilen Filmleri İzleme ve İndirme (`yuksektek-blender-films`)
+## 🎬 3. Çekilen Filmleri İzleme ve İndirme (Google Auth Korumalı Sinema Salonu)
 Antigravity her fotoğraf (`.png`) veya film (`.mp4`) çektiğinde bunu otomatik olarak Google Cloud üzerindeki **Özel Sinema Salonuna** yükler ve sohbet ekranında sana linkini verir:
 
-* 🍿 **Sinema Salonu (Tüm Filmlerin ve Fotoğrafların):**  
-  👉 **[Stüdyo Sinema Salonunu Aç](https://storage.googleapis.com/yuksektek-blender-films/index.html)**
+* 🍿 **Sinema Salonu (Sadece Senin Google Hesabına Özel):**  
+  👉 **[Stüdyo Sinema Salonunu Aç (Google ile Giriş Yap)](https://blender-sinema-salonu-74454451681.europe-west3.run.app)**
 * **Tek Tıkla İndir:** Linke tıkladığında filmin doğrudan tarayıcıda oynar; sağ alttaki **İndir** düğmesine basarak bilgisayarında veya telefonunda saklayabilir, arkadaşlarına gönderebilirsin!

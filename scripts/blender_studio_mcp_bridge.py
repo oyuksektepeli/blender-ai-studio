@@ -108,7 +108,7 @@ def wake_studio(info: Dict[str, str] = None) -> Dict[str, Any]:
                         "ip": ip,
                         "zone": zone,
                         "web_desktop_url": f"http://{ip}:6080/vnc.html?autoconnect=true&resize=scale",
-                        "cinema_gallery_url": f"https://storage.googleapis.com/{BUCKET_NAME}/index.html"
+                        "cinema_gallery_url": "https://blender-sinema-salonu-74454451681.europe-west3.run.app"
                     }
             except Exception:
                 pass
@@ -216,12 +216,13 @@ def handle_tool_call(name: str, args: Dict[str, Any]) -> Dict[str, Any]:
                 text=True,
                 timeout=15
             )
+            cinema_url = "https://blender-sinema-salonu-74454451681.europe-west3.run.app"
             urls = [
-                line.strip().replace(f"gs://{BUCKET_NAME}/", f"https://storage.googleapis.com/{BUCKET_NAME}/")
-                for line in out.splitlines() if line.strip()
+                line.strip().replace(f"gs://{BUCKET_NAME}/", f"{cinema_url}/media/")
+                for line in out.splitlines() if line.strip() and not line.strip().endswith("index.html")
             ]
             return {
-                "cinema_gallery_url": f"https://storage.googleapis.com/{BUCKET_NAME}/index.html",
+                "cinema_gallery_url": cinema_url,
                 "files": urls
             }
         except Exception as e:

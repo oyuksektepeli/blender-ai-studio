@@ -11,14 +11,14 @@ sudo apt-get install -y \
   libsm6 libice6 libgl1 libegl1 libxxf86vm1 libxfixes3 \
   curl wget xz-utils jq
 
-echo "=== [2/6] Blender 4.3 LTS indiriliyor ve /opt/blender altına kuruluyor ==="
+echo "=== [2/6] Blender 5.2.3 indiriliyor ve /opt/blender altına kuruluyor ==="
 if [ ! -f /opt/blender/blender ]; then
   cd /tmp
-  wget -q --show-progress https://download.blender.org/release/Blender4.3/blender-4.3.2-linux-x64.tar.xz
+  wget -q --show-progress https://download.blender.org/release/Blender5.2/blender-5.2.3-linux-x64.tar.xz
   sudo mkdir -p /opt/blender
-  sudo tar -xf blender-4.3.2-linux-x64.tar.xz -C /opt/blender --strip-components=1
+  sudo tar -xf blender-5.2.3-linux-x64.tar.xz -C /opt/blender --strip-components=1
   sudo ln -sf /opt/blender/blender /usr/local/bin/blender
-  rm -f blender-4.3.2-linux-x64.tar.xz
+  rm -f blender-5.2.3-linux-x64.tar.xz
 fi
 /opt/blender/blender --version
 

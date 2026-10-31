@@ -39,8 +39,8 @@ Yönetmen bir fotoğraf veya film istediğinde arka planda şu adımları **otom
 2. **Otomatik Bulut Yükleme & Sinema Linki:**
    * Her render alınan fotoğraf (`.png`) veya film (`.mp4`), sunucu tarafından otomatik olarak Google Cloud Storage (`gs://yuksektek-blender-films`) üzerindeki **Özel Sinema Galerisine** yüklenir.
    * Render biter bitmez yönetmene **tıklanabilir doğrudan izleme ve indirme linkini** büyük ve net şekilde sun:
-     * 🎬 **Filmi Hemen İzle / İndir:** `https://storage.googleapis.com/yuksektek-blender-films/films/<film_adi>.mp4`
-     * 🍿 **Tüm Filmlerin (Stüdyo Sinema Salonu):** `https://storage.googleapis.com/yuksektek-blender-films/index.html`
+     * 🎬 **Filmi Hemen İzle / İndir:** `https://blender-sinema-salonu-74454451681.europe-west3.run.app/media/films/<film_adi>.mp4`
+     * 🍿 **Tüm Filmlerin (Google Auth Korumalı Özel Sinema Salonu):** `https://blender-sinema-salonu-74454451681.europe-west3.run.app`
 
 ---
 

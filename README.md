@@ -9,7 +9,7 @@ Burası senin **Antigravity Yapay Zeka Yönetmen Ortağınla** birlikte hiçbir 
 
 | Stüdyo Aracı | Ne İşe Yarar? | Bağlantı |
 | :--- | :--- | :--- |
-| 🍿 **Sinema Salonu (Film Galerisi)** | Çektiğin tüm `.mp4` filmleri ve sahne fotoğraflarını izle & indir | **[Sinema Salonunu Aç](https://storage.googleapis.com/yuksektek-blender-films/index.html)** |
+| 🍿 **Özel Sinema Salonu (Google Auth Korumalı)** | Çektiğin tüm `.mp4` filmleri ve sahne fotoğraflarını kendi Google hesabınla (`nyletitgo@gmail.com`) giriş yaparak izle & indir | **[Sinema Salonunu Aç](https://blender-sinema-salonu-74454451681.europe-west3.run.app)** |
 | 🖥️ **Canlı Blender Stüdyo Ekranı** | Tarayıcıdan tek tıkla buluttaki Blender ekranına bağlan ve canlı izle | **[Canlı Ekranı Aç (:6080)](http://35.246.180.235:6080/vnc.html?autoconnect=true&resize=scale)** |
 
 ---

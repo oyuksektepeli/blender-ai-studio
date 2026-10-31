@@ -20,6 +20,7 @@ from contextlib import redirect_stdout
 HOST = "0.0.0.0"
 PORT = 9876
 BUCKET_NAME = "yuksektek-blender-films"
+CINEMA_BASE_URL = "https://blender-sinema-salonu-74454451681.europe-west3.run.app"
 ACTIVITY_FILE = "/tmp/blender_last_activity"
 
 cmd_queue = queue.Queue()
@@ -57,14 +58,14 @@ def enable_gpu_rendering():
 
 
 def upload_to_gcs(local_path: str, dest_blob: str, content_type: str) -> str:
-    """Dosyayı gs://yuksektek-blender-films içine yükler ve public URL döndürür."""
+    """Dosyayı gs://yuksektek-blender-films içine yükler ve Google Auth korumalı Sinema Salonu URL'sini döndürür."""
     gcs_uri = f"gs://{BUCKET_NAME}/{dest_blob}"
     subprocess.check_call([
         "gcloud", "storage", "cp", local_path, gcs_uri,
         f"--content-type={content_type}",
         "--cache-control=no-cache,max-age=0"
     ])
-    return f"https://storage.googleapis.com/{BUCKET_NAME}/{dest_blob}"
+    return f"{CINEMA_BASE_URL}/media/{dest_blob}"
 
 
 def handle_get_scene_info():
@@ -163,7 +164,7 @@ def handle_render_preview_snapshot(params):
         "status": "success",
         "shot_name": shot_name,
         "preview_url": url,
-        "cinema_gallery_url": f"https://storage.googleapis.com/{BUCKET_NAME}/index.html"
+        "cinema_gallery_url": CINEMA_BASE_URL
     }
 
 
@@ -213,7 +214,7 @@ def handle_render_animation_mp4(params):
         "frames_rendered": (frame_end - frame_start + 1),
         "duration_seconds": round((frame_end - frame_start + 1) / 24.0, 2),
         "film_download_and_watch_url": url,
-        "cinema_gallery_url": f"https://storage.googleapis.com/{BUCKET_NAME}/index.html"
+        "cinema_gallery_url": CINEMA_BASE_URL
     }
 
 
