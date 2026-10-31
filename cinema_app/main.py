@@ -1,37 +1,162 @@
+import json
 import os
-from flask import Flask, Response, abort, jsonify, render_template_string, request
+import urllib.error
+import urllib.request
+from datetime import timedelta
+from flask import (
+    Flask,
+    Response,
+    abort,
+    jsonify,
+    redirect,
+    render_template_string,
+    request,
+    session,
+    url_for,
+)
 from google.cloud import storage
 
 app = Flask(__name__)
+app.secret_key = os.environ.get(
+    "FLASK_SECRET_KEY", "yuksektek-blender-cinema-secret-2026-key"
+)
+app.permanent_session_lifetime = timedelta(days=365)
 
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "yuksektek-blender-films")
+IDENTITY_API_KEY = os.environ.get(
+    "IDENTITY_API_KEY", "AIzaSyASad5v35wA39G0dlWzYIpyk0oLoek-aBQ"
+)
 ALLOWED_EMAILS = {
-    email.strip().lower()
-    for email in os.environ.get(
-        "ALLOWED_EMAILS", "nyletitgo@gmail.com,onur@mamentis.com"
-    ).split(",")
-    if email.strip()
+    "nyletitgo@gmail.com",
+    "onur@mamentis.com",
 }
 
 storage_client = storage.Client()
 
 
-def get_authenticated_email() -> str:
-    raw = request.headers.get("X-Goog-Authenticated-User-Email", "")
-    # IAP format: "accounts.google.com:nyletitgo@gmail.com"
-    if ":" in raw:
-        raw = raw.split(":", 1)[1]
-    return raw.strip().lower()
+def get_logged_in_user():
+    email = session.get("user_email", "").strip().lower()
+    if email in ALLOWED_EMAILS:
+        return email
+    return None
 
 
-def verify_user():
-    email = get_authenticated_email()
-    if email and email not in ALLOWED_EMAILS:
-        abort(403, description=f"Bu özel sinema salonuna erişim yetkiniz yok ({email}).")
-    return email or "Özel Yönetmen (Google Auth)"
+LOGIN_HTML = """<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎬 Özel Sinema Salonu — Yönetmen Girişi</title>
+  <style>
+    :root {
+      --bg: #0b0c14;
+      --card: #15192b;
+      --accent: #ff5e97;
+      --accent2: #7c5cff;
+      --text: #f3f4f8;
+      --muted: #9ba1b7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #1b1e38 0%, var(--bg) 70%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 430px;
+      background: rgba(21, 25, 43, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      padding: 2.2rem 2rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(124, 92, 255, 0.2);
+      border: 1px solid rgba(124, 92, 255, 0.45);
+      color: #d7ceff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 1.75rem;
+      background: linear-gradient(90deg, #ff7eb3, #a18cd1, #fbc2eb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    p.sub { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+    form { display: flex; flex-direction: column; gap: 1rem; text-align: left; }
+    label { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+    input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(11, 12, 20, 0.8);
+      color: var(--text);
+      font-size: 1rem;
+      margin-top: 0.35rem;
+    }
+    input:focus { outline: 2px solid var(--accent2); border-color: transparent; }
+    button {
+      margin-top: 0.5rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      padding: 0.85rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .error {
+      background: rgba(255, 75, 75, 0.15);
+      border: 1px solid rgba(255, 75, 75, 0.4);
+      color: #ffb3b3;
+      padding: 0.75rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="badge">🔒 Google Cloud Identity Korumalı</div>
+    <h1>🎬 Özel Sinema Salonu</h1>
+    <p class="sub">Filmleri izlemek ve indirmek için yönetmen hesabınla giriş yap.</p>
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+    <form method="POST" action="/login">
+      <input type="hidden" name="next" value="{{ next_url }}" />
+      <div>
+        <label>Google E-Posta Adresi</label>
+        <input type="email" name="email" placeholder="nyletitgo@gmail.com" value="nyletitgo@gmail.com" required />
+      </div>
+      <div>
+        <label>Stüdyo Şifresi</label>
+        <input type="password" name="password" placeholder="••••••••" required autofocus />
+      </div>
+      <button type="submit">🍿 Sinema Salonuna Gir</button>
+    </form>
+  </div>
+</body>
+</html>
+"""
 
-
-HTML_TEMPLATE = """<!DOCTYPE html>
+GALLERY_HTML = """<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
@@ -67,7 +192,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .user-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.6rem;
       padding: 0.4rem 0.9rem;
       border-radius: 999px;
       background: rgba(124, 92, 255, 0.18);
@@ -77,6 +202,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       font-weight: 600;
       margin-bottom: 0.9rem;
     }
+    .user-badge a { color: #ff9ec4; text-decoration: none; margin-left: 0.4rem; }
     h1 {
       font-size: 2.3rem;
       background: linear-gradient(90deg, #ff7eb3, #a18cd1, #fbc2eb);
@@ -165,9 +291,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
   <header>
-    <div class="user-badge">🔒 Google Auth Korumalı Özel Salon • {{ user_email }}</div>
+    <div class="user-badge">
+      🔒 Özel Yönetmen Oturumu: {{ user_email }}
+      <a href="/logout">(Çıkış)</a>
+    </div>
     <h1>🎬 Özel Animasyon & Film Sinema Salonu</h1>
-    <p class="subtitle">Blender 5.2 AI Stüdyosu'nda çektiğin tüm filmler ve sahne fotoğrafları yalnızca senin Google hesabına özel olarak burada yayınlanır.</p>
+    <p class="subtitle">Blender 5.2 AI Stüdyosu'nda çektiğin tüm filmler ve sahne fotoğrafları yalnızca senin hesabına özel olarak burada yayınlanır.</p>
     <div class="controls">
       <button class="btn" onclick="loadGallery()">🔄 Yeni Çekimleri Yenile</button>
     </div>
@@ -196,6 +325,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       const previewsGrid = document.getElementById('previews-grid');
       try {
         const res = await fetch('/api/items');
+        if (res.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
         const data = await res.json();
         const films = data.films || [];
         const previews = data.previews || [];
@@ -254,15 +387,69 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 """
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    next_url = request.args.get("next") or request.form.get("next") or "/"
+    if request.method == "GET":
+        if get_logged_in_user():
+            return redirect(next_url)
+        return render_template_string(LOGIN_HTML, error=None, next_url=next_url)
+
+    email = (request.form.get("email") or "").strip().lower()
+    password = request.form.get("password") or ""
+
+    if email not in ALLOWED_EMAILS:
+        return render_template_string(
+            LOGIN_HTML,
+            error="Bu e-posta adresinin özel sinema salonuna giriş yetkisi yok.",
+            next_url=next_url,
+        )
+
+    # Verify against Google Cloud Identity Platform (Firebase Auth REST API)
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={IDENTITY_API_KEY}"
+    payload = json.dumps(
+        {"email": email, "password": password, "returnSecureToken": True}
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        url, data=payload, headers={"Content-Type": "application/json"}, method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            auth_data = json.loads(resp.read().decode("utf-8"))
+            verified_email = auth_data.get("email", "").lower()
+            if verified_email in ALLOWED_EMAILS:
+                session.permanent = True
+                session["user_email"] = verified_email
+                return redirect(next_url)
+    except urllib.error.HTTPError:
+        pass
+
+    return render_template_string(
+        LOGIN_HTML,
+        error="E-posta veya şifre hatalı. Lütfen tekrar dene.",
+        next_url=next_url,
+    )
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
 @app.route("/")
 def index():
-    user_email = verify_user()
-    return render_template_string(HTML_TEMPLATE, user_email=user_email)
+    user_email = get_logged_in_user()
+    if not user_email:
+        return redirect(url_for("login", next="/"))
+    return render_template_string(GALLERY_HTML, user_email=user_email)
 
 
 @app.route("/api/items")
 def api_items():
-    verify_user()
+    user_email = get_logged_in_user()
+    if not user_email:
+        abort(401)
     bucket = storage_client.bucket(BUCKET_NAME)
     blobs = list(bucket.list_blobs())
     blobs.sort(key=lambda b: b.updated or 0, reverse=True)
@@ -285,7 +472,9 @@ def api_items():
 
 @app.route("/media/<path:blob_path>")
 def serve_media(blob_path: str):
-    verify_user()
+    user_email = get_logged_in_user()
+    if not user_email:
+        return redirect(url_for("login", next=request.full_path))
     bucket = storage_client.bucket(BUCKET_NAME)
     blob = bucket.blob(blob_path)
     if not blob.exists():
